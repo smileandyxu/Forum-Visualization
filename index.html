@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title> Forum Visualization </title>
+    <script src="https://cdn.bootcss.com/echarts/4.2.1-rc1/echarts.min.js"></script>
+</head>
+<body>
+
+    <div id="main" style="width:1280px;height:240px;border:1px solid black;"></div>
+
+    <!-- <script src="./echarts.min.js"></script> -->
+    <!--  <script src="index.js"></script> -->
+    <script type="text/javascript">
+        var mainChart = echarts.init(document.getElementById('main'));
+
+        var data = [];
+        var dataCount = 32;
+        var startTime = new Date();
+        var categories = ['Index'];
+        var types = [
+            {name: 'JS Heap', color: '#7b9ce1'},
+            {name: 'Documents', color: '#bd6d6c'},
+            {name: 'Nodes', color: '#75d874'},
+            {name: 'Listeners', color: '#e0bc78'},
+            {name: 'GPU Memory', color: '#dc77dc'},
+            {name: 'GPU', color: '#72b362'}
+        ];
+
+        // Generate mock data
+        var baseTime = startTime;
+        var baseIndex = Number(0);
+        var minDensity = 1/dataCount;
+        var maxDensity = 1/1;
+        for (var i = 0; i < dataCount; i++) {
+            var typeItem = types[Math.round(Math.random() * (types.length - 1))];
+            var msg = "Test message. <br/>Please notice that this is a very long message. <br/>It should not be shown within one line."
+            data.push({
+                name: "#"+baseIndex.toString(),
+                value: [
+                    0, 
+                    baseIndex, 
+                    baseIndex+0.99, 
+                    new Date(baseTime), 
+                    msg, 
+                    1-1.*(i+1)/dataCount     // density
+                    // 0,
+                    // baseTime,
+                    // baseTime + duration,
+                    // duration
+                ],
+                // itemStyle: {
+                //     normal: {
+                //         color: colorValue[pickColor(1./(i+1))]
+                //     }
+                // }
+            });
+            baseTime.setDate(baseTime.getDate()+1+i);
+            baseIndex++;
+        }
+
+        function renderItem(params, api) {
+            var start = api.coord([api.value(1), 0]);
+            var end = api.coord([api.value(2), 0]);
+            var height = api.size([0, 1])[1] * 0.6;
+
+            var rectShape = echarts.graphic.clipRectByRect({
+                x: start[0],
+                y: start[1] - height / 2,
+                width: end[0] - start[0],
+                height: height
+            }, {
+                x: params.coordSys.x,
+                y: params.coordSys.y,
+                width: params.coordSys.width,
+                height: params.coordSys.height
+            });
+
+            return rectShape && {
+                type: 'rect',
+                shape: rectShape,
+                style: api.style()
+            };
+        }
+
+
+        option = {
+            tooltip: {
+                formatter: function (params) {
+                    return params.marker + params.name + '<br/>Time: ' + 
+                    params.value[3] + '<br/>Content: ' + 
+                    params.value[4];
+                }
+            },
+            title: {
+                text: 'Forum Index',
+                left: 'center'
+            },
+            dataZoom: [{
+                type: 'slider',
+                filterMode: 'weakFilter',
+                showDataShadow: true,
+                top: 200,
+                height: 10,
+                borderColor: 'transparent',
+                backgroundColor: '#e2e2e2',
+                handleIcon: 'M10.7,11.9H9.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7v-1.2h6.6z M13.3,22H6.7v-1.2h6.6z M13.3,19.6H6.7v-1.2h6.6z', // jshint ignore:line
+                handleSize: 20,
+                handleStyle: {
+                    shadowBlur: 6,
+                    shadowOffsetX: 1,
+                    shadowOffsetY: 2,
+                    shadowColor: '#aaa'
+                },
+                labelFormatter: '', 
+                xAxisIndex: [0, 1]
+            }, {
+                type: 'inside',
+                filterMode: 'weakFilter', 
+                xAxisIndex: [0, 1]
+            }],
+            grid: {
+                height: 100
+            },
+            xAxis: [{
+                name: "Index", 
+                min: Number(0),
+                scale: true,
+                axisLabel: {
+                    formatter: function (val) {
+                        return val;
+                    }
+                }
+            }, {
+                name: "Time", 
+                type: "category", 
+                axisLabel: {
+                    formatter: function (val) {
+                        return val.toUTCString();
+                    }
+                }
+                // splitLine: {
+                //     show: false
+                // }
+            }], 
+            yAxis: {
+                data: categories
+            },
+            visualMap: {
+                type: 'continuous', 
+                min: 0,
+                max: 1,
+                calculable: true,
+                realtime: true,
+                splitNumber: 8,
+                inRange: {
+                    color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                }
+            },
+            series: [{
+                type: 'custom',
+                renderItem: renderItem,
+                xAxisIndex: 0, 
+                itemStyle: {
+                    opacity: 0.8
+                },
+                xAxisIndex: 0, 
+                encode: {
+                    x: [1, 2],
+                    y: 0
+                },
+                data: data
+            }, {
+                type: 'custom',
+                // renderItem: renderItem,
+                itemStyle: {
+                    opacity: 0.8
+                },
+                xAxisIndex: 1, 
+                encode: {
+                    x: 3,
+                    y: 0
+                },
+                data: data
+            }]
+        };
+
+        mainChart.setOption(option)
+
+    </script>
+</body>
+</html>
